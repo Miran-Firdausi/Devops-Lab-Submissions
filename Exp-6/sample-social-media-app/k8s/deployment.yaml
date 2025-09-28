@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: social-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: social-app
+  template:
+    metadata:
+      labels:
+        app: social-app
+    spec:
+      containers:
+        - name: social-app
+          image: social-app:v1
+          ports:
+            - containerPort: 5000
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: social-app-service
+spec:
+  selector:
+    app: social-app
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 5000
+  type: NodePort
