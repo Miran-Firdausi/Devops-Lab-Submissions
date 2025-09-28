@@ -1,0 +1,44 @@
+version: "3.8"
+services:
+  product-service:
+    build:
+      context: ./product-service
+    image: retail/product-service:local
+    ports:
+      - "8081:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/retail
+      - SPRING_PROFILES_ACTIVE=prod
+    depends_on:
+      - db
+
+  order-service:
+    build:
+      context: ./order-service
+    image: retail/order-service:local
+    ports:
+      - "8082:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/retail
+    depends_on:
+      - db
+
+  frontend:
+    build:
+      context: ./frontend
+    image: retail/frontend:local
+    ports:
+      - "3000:80" # if it's static
+
+  db:
+    image: postgres:15
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: retail
+      POSTGRES_USER: retail
+      POSTGRES_PASSWORD: retail_pass
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+volumes:
+  db_data:
