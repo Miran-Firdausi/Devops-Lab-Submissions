@@ -1,0 +1,43 @@
+name: Build, Scan, Push
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-scan-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Build with Maven
+        run: mvn -B -DskipTests package
+
+      - name: Build Docker image
+        run: docker build -t retail/product-service:${{ github.sha }} .
+
+      - name: Install Trivy
+        run: |
+          sudo apt-get update && sudo apt-get install -y wget
+          wget -qO- https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin
+
+      - name: Trivy scan
+        run: |
+          trivy image --severity HIGH,CRITICAL --exit-code 1 retail/product-service:${{ github.sha }}
+
+      - name: Login to DTR
+        env:
+          DTR_USER: ${{ secrets.DTR_USER }}
+          DTR_PASS: ${{ secrets.DTR_PASS }}
+        run: echo $DTR_PASS | docker login dtr.company.local -u $DTR_USER --password-stdin
+
+      - name: Tag and Push
+        run: |
+          docker tag retail/product-service:${{ github.sha }} dtr.company.local/retail/product-service:${{ github.sha }}
+          docker push dtr.company.local/retail/product-service:${{ github.sha }}
