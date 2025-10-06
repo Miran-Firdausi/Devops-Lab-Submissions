@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-service
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: order
+  template:
+    metadata:
+      labels:
+        app: order
+    spec:
+      containers:
+        - name: order
+          image: order-service:latest  # Must match your Docker image
+          ports:
+            - containerPort: 5002
+          env:
+            - name: USER_SERVICE_URL
+              value: "http://user-service:5000"
+            - name: PRODUCT_SERVICE_URL
+              value: "http://product-service:5001"
